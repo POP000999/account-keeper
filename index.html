@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Account Keeper</title>
+<style>
+:root{--bg:#14121c;--panel:#1d1a29;--field:#110f18;--line:#2e2a40;--tx:#e8e6f2;--mut:#8a86a3;--acc:#b79cff;--cyan:#6fe3f0;--grn:#6ee7a0;--red:#d0606f;color-scheme:dark;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;font-size:14px}
+.wrap{max-width:1150px;margin:0 auto;padding:16px}
+h1{font-size:18px;letter-spacing:.1em;margin:0}
+.top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+.sp{flex:1}
+input,textarea,select{background:var(--field);color:var(--tx);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:inherit;outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--acc)}
+button{font:inherit;cursor:pointer;border:0;border-radius:8px;padding:8px 14px;font-weight:700;color:#10101a;background:var(--grn)}
+button.sec{background:var(--line);color:var(--tx)}
+button.red{background:var(--red);color:#fff}
+.cats{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.chip{background:var(--panel);color:var(--mut);border:1px solid var(--line);padding:5px 12px;font-size:12px}
+.chip.on{color:#10101a;background:var(--acc);border-color:var(--acc)}
+.chip.add{border-style:dashed;color:var(--cyan)}
+.bar{display:none;gap:6px;flex-wrap:wrap;align-items:center;background:#262140;border:1px solid var(--acc);border-radius:10px;padding:8px 10px;margin-bottom:12px}
+.bar.on{display:flex}
+.bar b{color:var(--acc);margin-right:6px}
+.bar button{padding:5px 10px;font-size:12px}
+.tbl{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:820px}
+th{font-size:11px;color:var(--mut);letter-spacing:.12em;text-align:left;padding:10px 12px;border-bottom:1px solid var(--line)}
+td{padding:6px 12px;border-bottom:1px solid #25223a;vertical-align:middle}
+tr.sel td{background:#251f3d}
+td.k{width:34px}
+td.k input,th input{width:16px;height:16px;padding:0;accent-color:#b79cff}
+td.n{color:var(--mut);width:42px;text-align:center}
+td.u{font-weight:700;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+td.u small{display:inline-block;margin-left:6px;font-weight:400;font-size:10px;color:var(--acc);border:1px solid var(--line);border-radius:5px;padding:0 5px}
+td.d input{width:100%;background:transparent;border-color:transparent}
+td.d input:hover{border-color:var(--line)}
+td.c{white-space:nowrap}
+.cp{padding:4px 8px;font-size:11px;background:var(--line);color:var(--cyan);margin-right:3px}
+.cp:hover{background:#3a3556}
+.cp.off{opacity:.3;pointer-events:none}
+.x{background:transparent;color:var(--red);padding:4px 8px}
+.ed{background:transparent;color:var(--mut);padding:4px 8px}
+.empty{padding:40px;text-align:center;color:var(--mut)}
+.modal{position:fixed;inset:0;background:#000a;display:none;align-items:center;justify-content:center;padding:16px;z-index:5}
+.modal.on{display:flex}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px;width:100%;max-width:560px;max-height:90vh;overflow:auto}
+.box label{display:block;font-size:11px;color:var(--mut);letter-spacing:.1em;margin:12px 0 5px}
+.box input,.box select{width:100%}
+.fmt{border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px;color:var(--mut);margin:12px 0;line-height:2}
+.fmt code{background:var(--field);color:var(--cyan);border:1px solid var(--line);border-radius:6px;padding:2px 7px;font-weight:700}
+.row{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--mut);margin-bottom:6px;letter-spacing:.1em}
+textarea{width:100%;height:170px;resize:vertical;border-color:var(--acc)}
+.act{display:flex;justify-content:flex-end;gap:10px;margin-top:16px;border-top:1px solid var(--line);padding-top:14px}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--grn);color:#10101a;padding:8px 16px;border-radius:8px;font-weight:700;opacity:0;pointer-events:none;transition:.2s;z-index:9}
+.toast.on{opacity:1}
+.note{color:var(--mut);font-size:11px;margin-top:12px;line-height:1.6}
+.ngrid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:800px){.ngrid{grid-template-columns:1fr}}
+#nTx{height:460px;font-size:13px;line-height:1.6;border-color:var(--line)}
+#nTx:focus{border-color:var(--acc)}
+#nPrev{max-height:460px;overflow:auto}
+.nc{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:8px}
+.nt{color:var(--acc);font-weight:700;margin-bottom:6px;font-size:13px}
+.nr{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:13px}
+.nr span{color:var(--mut);width:34px;font-size:11px}
+.nr b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="cats"><button class="chip on" id="mA">บัญชี</button><button class="chip" id="mN">โน้ต (เขียนเอง)</button></div>
+  <div id="accView">
+  <div class="top">
+    <h1>ACCOUNT KEEPER</h1>
+    <span id="cnt" style="color:var(--mut)"></span>
+    <span class="sp"></span>
+    <input id="q" placeholder="ค้นหาชื่อ / รายละเอียด" style="width:200px">
+    <button class="sec" id="bTxt">ส่งออก .txt</button>
+    <button class="sec" id="bExp">สำรอง</button>
+    <button class="sec" id="bImp">กู้คืน</button>
+    <button class="sec" id="bSync">☁ ซิงก์: ปิด</button>
+    <button class="sec" id="bEnc">🔒 ส่งออกเข้ารหัส</button>
+    <button class="sec" id="bDec">🔓 นำเข้าเข้ารหัส</button>
+    <button id="bAdd">+ เพิ่มบัญชี</button>
+    <input type="file" id="file" accept=".json" hidden>
+    <input type="file" id="ftxt" accept=".txt,text/plain" hidden>
+  </div>
+  <div class="cats" id="cats"></div>
+  <div class="bar" id="bar">
+    <b id="selN"></b>
+    <span style="color:var(--mut);font-size:12px">คัดลอก:</span>
+    <button class="sec" data-bc="user">ชื่อ</button>
+    <button class="sec" data-bc="pass">รหัส</button>
+    <button class="sec" data-bc="cookie">คุกกี้</button>
+    <button class="sec" data-bc="up">ชื่อ:รหัส</button>
+    <button class="sec" data-bc="upc">ชื่อ:รหัส:คุกกี้</button>
+    <span class="sp"></span>
+    <button class="sec" id="bMove">ย้ายหมวด</button>
+    <button class="sec" id="bTxtSel">ส่งออก .txt</button>
+    <button class="red" id="bDelSel">ลบที่เลือก</button>
+    <button class="sec" id="bClr">ยกเลิก</button>
+  </div>
+  <div class="tbl"><table>
+    <thead><tr><th class="k"><input type="checkbox" id="all" title="เลือกทั้งหมด"></th><th style="text-align:center">#</th><th>USERNAME</th><th>DESCRIPTION</th><th>COPY</th><th></th></tr></thead>
+    <tbody id="tb"></tbody>
+  </table><div class="empty" id="empty">ยังไม่มีบัญชี กด "+ เพิ่มบัญชี"</div></div>
+  <div class="note">ข้อมูลเก็บในเบราว์เซอร์เครื่องนี้เท่านั้น (ไม่เข้ารหัส ไม่ส่งออกไปไหน) ควรกด "สำรอง" ไว้เป็นระยะ และไม่ควรแชร์ลิงก์/ไฟล์ให้คนอื่น</div>
+  </div>
+  <div id="noteView" style="display:none">
+    <div class="cats" id="nTabs"></div>
+    <div id="nEmpty" class="empty">ยังไม่มีโน้ต กด "+ โน้ตใหม่" เพื่อเริ่มเขียน</div>
+    <div id="nEd" style="display:none">
+      <div class="top"><input id="nName" placeholder="ชื่อโน้ต" style="width:240px"><span class="sp"></span><button class="sec" id="nCp">คัดลอกทั้งหมด</button><button class="sec" id="nDl">ดาวน์โหลด .txt</button><button class="red" id="nDel">ลบโน้ต</button></div>
+      <div class="ngrid">
+        <textarea id="nTx" spellcheck="false" placeholder="เขียนแบบ Notepad ได้เลย
+
+(บรรทัดแรก = หัวข้อ, ต่อมา = ชื่อ, รหัส — เว้นบรรทัดว่างคั่นแต่ละบัญชี)"></textarea>
+        <div id="nPrev"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="m"><div class="box" id="mb"></div></div>
+<div class="toast" id="t"></div>
+
+<script>
+const KEY="acc_keeper_v2";
+let accs=[],cats=[],notes=[],cur="all",sel=new Set();
+try{
+  const d=JSON.parse(localStorage.getItem(KEY)||"null");
+  if(d){accs=d.accs||[];cats=d.cats||[];notes=d.notes||[]}
+  else{const o=JSON.parse(localStorage.getItem("acc_keeper_v1")||"[]");accs=o.map(a=>({...a,id:String(a.id),cat:""}))}
+}catch(e){}
+const saveLocal=()=>{try{localStorage.setItem(KEY,JSON.stringify({accs,cats,notes}))}catch(e){}};
+const save=()=>{saveLocal();try{scheduleSync()}catch(e){}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const uid=()=>Date.now().toString(36).padStart(9,"0")+Math.random().toString(36).slice(2,6);
+function toast(m){const t=$("t");t.textContent=m;t.classList.add("on");clearTimeout(toast.h);toast.h=setTimeout(()=>t.classList.remove("on"),1200)}
+function copy(txt){
+  const done=()=>toast("คัดลอกแล้ว");
+  const fb=()=>{const a=document.createElement("textarea");a.value=txt;a.style.cssText="position:fixed;opacity:0";document.body.appendChild(a);a.select();try{document.execCommand("copy");done()}catch(e){toast("คัดลอกไม่สำเร็จ")}a.remove()};
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(txt).then(done,fb)}else fb();
+}
+function fmt(a,k){
+  const m={user:a.user,pass:a.pass,cookie:a.cookie,up:a.user&&a.pass?a.user+":"+a.pass:"",upc:a.user&&a.pass&&a.cookie?a.user+":"+a.pass+":"+a.cookie:""};
+  return m[k]||"";
+}
+function lines(list,k){return list.map(a=>fmt(a,k)).filter(Boolean).join("\n")}
+function download(name,text){
+  const b=new Blob([text],{type:"text/plain;charset=utf-8"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;a.click();
+}
+
+/* dialog */
+function dlg(o){
+  $("mb").innerHTML=`<h1>${o.title}</h1>${o.body||""}<div class="act">${o.noCancel?"":'<button class="sec" id="dC">ยกเลิก</button>'}<button class="${o.danger?"red":""}" id="dO">${o.ok||"ตกลง"}</button></div>`;
+  $("m").classList.add("on");
+  const close=()=>$("m").classList.remove("on");
+  if($("dC"))$("dC").onclick=close;
+  $("dO").onclick=()=>{if(o.onOk&&o.onOk()===false)return;close()};
+  if(o.init)o.init();
+}
+const closeDlg=()=>$("m").classList.remove("on");
+const catOpts=(v)=>`<option value="">(ไม่มีหมวด)</option>`+cats.map(c=>`<option ${c===v?"selected":""}>${esc(c)}</option>`).join("");
+
+function parse(line){
+  line=line.trim();if(!line)return null;
+  let user="",pass="",cookie="";
+  const i=line.indexOf("_|WARNING");
+  if(i>=0){
+    cookie=line.slice(i);
+    const pre=line.slice(0,i).replace(/:+$/,"");
+    if(pre){const p=pre.split(":");user=p.shift();pass=p.join(":")}
+  }else{
+    const p=line.split(":");
+    if(p.length===1){if(line.length>60)cookie=line;else user=line}
+    else if(p.length===2){user=p[0];pass=p[1]}
+    else{user=p[0];pass=p[1];cookie=p.slice(2).join(":")}
+  }
+  return {id:uid(),user,pass,cookie,desc:"",cat:""};
+}
+
+function visible(){
+  const q=$("q").value.toLowerCase();
+  return accs.filter(a=>(cur==="all"||a.cat===cur)&&(!q||(a.user||"").toLowerCase().includes(q)||(a.desc||"").toLowerCase().includes(q)));
+}
+function selected(){return accs.filter(a=>sel.has(a.id))}
+
+function render(){
+  // categories
+  const cc=$("cats");cc.innerHTML="";
+  const mk=(label,val,n)=>{const b=document.createElement("button");b.className="chip"+(cur===val?" on":"");b.textContent=label+" ("+n+")";b.dataset.cat=val;cc.appendChild(b)};
+  mk("ทั้งหมด","all",accs.length);
+  cats.forEach(c=>mk(c,c,accs.filter(a=>a.cat===c).length));
+  const add=document.createElement("button");add.className="chip add";add.textContent="+ หมวดหมู่";add.dataset.addcat="1";cc.appendChild(add);
+  if(cur!=="all"){
+    const e=document.createElement("button");e.className="chip";e.textContent="✎ แก้ชื่อหมวด";e.dataset.rencat="1";cc.appendChild(e);
+    const d=document.createElement("button");d.className="chip";d.style.color="var(--red)";d.textContent="ลบหมวด";d.dataset.delcat="1";cc.appendChild(d);
+  }
+  // rows
+  const list=visible(),tb=$("tb");tb.innerHTML="";
+  list.forEach((a,idx)=>{
+    const tr=document.createElement("tr");
+    if(sel.has(a.id))tr.className="sel";
+    const name=a.user||"(ไม่มีชื่อ)";
+    tr.innerHTML=`<td class="k"><input type="checkbox" data-s="${a.id}" ${sel.has(a.id)?"checked":""}></td>
+      <td class="n">${idx+1}</td>
+      <td class="u" title="${esc(name)}">${esc(name)}${a.cat?`<small>${esc(a.cat)}</small>`:""}</td>
+      <td class="d"><input value="${esc(a.desc)}" placeholder="รายละเอียด..." data-d="${a.id}"></td>
+      <td class="c">
+        <button class="cp ${fmt(a,"user")?"":"off"}" data-c="user" data-i="${a.id}">ชื่อ</button>
+        <button class="cp ${fmt(a,"pass")?"":"off"}" data-c="pass" data-i="${a.id}">รหัส</button>
+        <button class="cp ${fmt(a,"cookie")?"":"off"}" data-c="cookie" data-i="${a.id}">คุกกี้</button>
+        <button class="cp ${fmt(a,"up")?"":"off"}" data-c="up" data-i="${a.id}">ชื่อ:รหัส</button>
+        <button class="cp ${fmt(a,"upc")?"":"off"}" data-c="upc" data-i="${a.id}">ชื่อ:รหัส:คุกกี้</button>
+      </td>
+      <td style="white-space:nowrap"><button class="ed" data-e="${a.id}">แก้ไข</button><button class="x" data-x="${a.id}">ลบ</button></td>`;
+    tb.appendChild(tr);
+  });
+  $("empty").style.display=list.length?"none":"block";
+  $("cnt").textContent=accs.length+" accounts";
+  // selection
+  sel=new Set([...sel].filter(id=>accs.some(a=>a.id===id)));
+  $("bar").classList.toggle("on",sel.size>0);
+  $("selN").textContent="เลือก "+sel.size;
+  $("all").checked=list.length>0&&list.every(a=>sel.has(a.id));
+}
+
+/* table events */
+$("tb").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  const get=id=>accs.find(x=>x.id===id);
+  if(b.dataset.c){const a=get(b.dataset.i);if(a)copy(fmt(a,b.dataset.c));return}
+  if(b.dataset.x){
+    const a=get(b.dataset.x);
+    dlg({title:"ลบบัญชี",body:`<p>ลบ <b>${esc(a.user||"(ไม่มีชื่อ)")}</b> ?</p>`,ok:"ลบ",danger:true,onOk:()=>{accs=accs.filter(x=>x.id!==a.id);sel.delete(a.id);save();render();toast("ลบแล้ว")}});
+    return;
+  }
+  if(b.dataset.e){
+    const a=get(b.dataset.e);
+    dlg({title:"แก้ไขบัญชี",ok:"บันทึก",
+      body:`<label>USERNAME</label><input id="eU" value="${esc(a.user)}"><label>PASSWORD</label><input id="eP" value="${esc(a.pass)}"><label>COOKIE</label><input id="eC" value="${esc(a.cookie)}"><label>หมวดหมู่</label><select id="eG">${catOpts(a.cat)}</select>`,
+      onOk:()=>{a.user=$("eU").value.trim();a.pass=$("eP").value;a.cookie=$("eC").value.trim();a.cat=$("eG").value;save();render()}});
+  }
+});
+$("tb").addEventListener("change",e=>{
+  const id=e.target.dataset.s;if(!id)return;
+  e.target.checked?sel.add(id):sel.delete(id);render();
+});
+$("tb").addEventListener("input",e=>{
+  if(e.target.dataset.d){const a=accs.find(x=>x.id===e.target.dataset.d);if(a){a.desc=e.target.value;save()}}
+});
+$("all").onchange=e=>{
+  visible().forEach(a=>e.target.checked?sel.add(a.id):sel.delete(a.id));render();
+};
+$("q").addEventListener("input",render);
+
+/* categories */
+$("cats").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.cat){cur=b.dataset.cat;render();return}
+  if(b.dataset.addcat){
+    dlg({title:"เพิ่มหมวดหมู่",ok:"เพิ่ม",body:`<label>ชื่อหมวดหมู่</label><input id="cN" placeholder="เช่น AOT, ขายแล้ว">`,init:()=>$("cN").focus(),
+      onOk:()=>{const n=$("cN").value.trim();if(!n||cats.includes(n)){toast("ชื่อว่างหรือซ้ำ");return false}cats.push(n);cur=n;save();render()}});
+  }
+  if(b.dataset.rencat){
+    const old=cur;
+    dlg({title:"แก้ชื่อหมวดหมู่",ok:"บันทึก",body:`<label>ชื่อใหม่</label><input id="cN" value="${esc(old)}">`,
+      onOk:()=>{const n=$("cN").value.trim();if(!n||(n!==old&&cats.includes(n))){toast("ชื่อว่างหรือซ้ำ");return false}cats=cats.map(c=>c===old?n:c);accs.forEach(a=>{if(a.cat===old)a.cat=n});cur=n;save();render()}});
+  }
+  if(b.dataset.delcat){
+    const old=cur;
+    dlg({title:"ลบหมวดหมู่",danger:true,ok:"ลบหมวด",body:`<p>ลบหมวด <b>${esc(old)}</b> ? (บัญชีในหมวดนี้จะไม่ถูกลบ แต่จะกลายเป็นไม่มีหมวด)</p>`,
+      onOk:()=>{cats=cats.filter(c=>c!==old);accs.forEach(a=>{if(a.cat===old)a.cat=""});cur="all";save();render()}});
+  }
+});
+
+/* bulk actions */
+$("bar").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b||!b.dataset.bc)return;
+  const t=lines(selected(),b.dataset.bc);
+  t?copy(t):toast("ไม่มีข้อมูลในรูปแบบนี้");
+});
+$("bClr").onclick=()=>{sel.clear();render()};
+$("bDelSel").onclick=()=>{
+  const n=sel.size;
+  dlg({title:"ลบที่เลือก",danger:true,ok:"ลบ "+n+" บัญชี",body:`<p>ลบ ${n} บัญชีที่เลือก? ย้อนกลับไม่ได้</p>`,
+    onOk:()=>{accs=accs.filter(a=>!sel.has(a.id));sel.clear();save();render();toast("ลบแล้ว "+n)}});
+};
+$("bMove").onclick=()=>{
+  dlg({title:"ย้ายไปหมวดหมู่",ok:"ย้าย",body:`<label>เลือกหมวด (${sel.size} บัญชี)</label><select id="mG">${catOpts("")}</select>`,
+    onOk:()=>{const g=$("mG").value;accs.forEach(a=>{if(sel.has(a.id))a.cat=g});save();render();toast("ย้ายแล้ว")}});
+};
+
+/* txt export */
+function txtDialog(useSel){
+  const list=useSel?selected():visible();
+  dlg({title:"ส่งออกเป็น .txt",ok:"ดาวน์โหลด .txt",
+    body:`<p style="color:var(--mut)">${list.length} บัญชี (${useSel?"ที่เลือก":"ที่แสดงอยู่"}) — หนึ่งบัญชีต่อบรรทัด</p>
+      <label>รูปแบบ</label><select id="xF"><option value="upc">ชื่อ:รหัส:คุกกี้</option><option value="up">ชื่อ:รหัส</option><option value="user">ชื่อ</option><option value="pass">รหัส</option><option value="cookie">คุกกี้</option></select>
+      <div style="margin-top:10px"><button class="sec" id="xCp">คัดลอกแทน</button></div>`,
+    init:()=>{$("xCp").onclick=()=>{const t=lines(list,$("xF").value);t?copy(t):toast("ไม่มีข้อมูล")}},
+    onOk:()=>{const t=lines(list,$("xF").value);if(!t){toast("ไม่มีข้อมูลในรูปแบบนี้");return false}download("accounts.txt",t)}});
+}
+$("bTxt").onclick=()=>txtDialog(false);
+$("bTxtSel").onclick=()=>txtDialog(true);
+
+/* add */
+$("bAdd").onclick=()=>{
+  dlg({title:"ADD ACCOUNTS",ok:"Add Accounts",
+    body:`<div class="fmt">รูปแบบต่อบรรทัด: <code>USER:PASS:COOKIE</code> หรือ <code>COOKIE</code> หรือ <code>USER:PASS</code></div>
+      <div class="row"><span>ACCOUNTS</span><span><button class="sec" id="aF" style="padding:3px 10px;font-size:11px">โหลดจากไฟล์ .txt</button> <span id="lc">0 lines</span></span></div>
+      <textarea id="ta" placeholder="วางรหัสหรือคุกกี้ — หนึ่งบัญชีต่อบรรทัด" spellcheck="false"></textarea>
+      <label>หมวดหมู่</label><select id="aG">${catOpts(cur==="all"?"":cur)}</select>`,
+    init:()=>{
+      const ta=$("ta");ta.focus();
+      ta.oninput=()=>{$("lc").textContent=ta.value.split("\n").filter(l=>l.trim()).length+" lines"};
+      $("aF").onclick=()=>$("ftxt").click();
+    },
+    onOk:()=>{
+      const g=$("aG").value;
+      const list=$("ta").value.split("\n").map(parse).filter(Boolean);
+      if(!list.length){toast("ยังไม่ได้ใส่ข้อมูล");return false}
+      list.forEach((a,i)=>{a.cat=g;if(!a.user)a.user="Account "+(accs.length+i+1)});
+      accs.push(...list);save();render();toast("เพิ่ม "+list.length+" บัญชี");
+    }});
+};
+$("ftxt").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{const ta=$("ta");if(ta){ta.value=(ta.value?ta.value.replace(/\n*$/,"\n"):"")+r.result;ta.oninput()}};
+  r.readAsText(f);e.target.value="";
+};
+
+/* backup */
+$("bExp").onclick=()=>download("accounts-backup.json",JSON.stringify({accs,cats,notes},null,2));
+$("bImp").onclick=()=>$("file").click();
+$("file").onchange=e=>{
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const d=JSON.parse(r.result);
+    const list=Array.isArray(d)?d:(d.accs||[]);
+    const have=new Set(accs.map(a=>a.id));
+    list.forEach(a=>{a.id=have.has(String(a.id))?uid():String(a.id||uid());a.cat=a.cat||"";a.desc=a.desc||"";accs.push(a);if(a.cat&&!cats.includes(a.cat))cats.push(a.cat)});
+    (d.cats||[]).forEach(c=>{if(!cats.includes(c))cats.push(c)});
+    (d.notes||[]).forEach(x=>{x.id=uid();notes.push(x)});
+    save();render();toast("กู้คืนแล้ว");
+  }catch(x){toast("ไฟล์ไม่ถูกต้อง")}};
+  r.readAsText(f);e.target.value="";
+};
+/* notes */
+let curNote=null;
+const nCur=()=>notes.find(n=>n.id===curNote);
+function blocks(t){return t.split(/\n[ \t]*\n/).map(b=>b.split("\n").map(l=>l.trim()).filter(Boolean)).filter(l=>l.length)}
+function parts(l){const p={title:"",user:"",pass:"",extra:[]};
+  if(l.length>=3){p.title=l[0];p.user=l[1];p.pass=l[2];p.extra=l.slice(3)}
+  else if(l.length===2){p.user=l[0];p.pass=l[1]}
+  else p.title=l[0];
+  return p}
+function renderPrev(){
+  const n=nCur();if(!n)return;
+  const bl=blocks(n.text);
+  $("nPrev").innerHTML=bl.length?bl.map((l,i)=>{const p=parts(l);
+    const row=(lab,v,k)=>`<div class="nr"><span>${lab}</span><b title="${esc(v)}">${esc(v)}</b><button class="cp" data-nc="${k}" data-b="${i}">คัดลอก</button></div>`;
+    const both=p.user&&p.pass;
+    return `<div class="nc">${p.title?`<div class="nt">${esc(p.title)}</div>`:""}${p.user?row("ชื่อ",p.user,"u"):""}${p.pass?row("รหัส",p.pass,"p"):""}${p.extra.map((x,j)=>row("+",x,"x"+j)).join("")}${both?`<div style="margin-top:6px"><button class="cp" data-nc="up" data-b="${i}">ชื่อ:รหัส</button><button class="cp" data-nc="add" data-b="${i}">→ เพิ่มเข้าบัญชี</button></div>`:""}</div>`}).join(""):`<div class="empty">พิมพ์ในช่องซ้าย ระบบจะแยกชื่อ/รหัสให้ดูตรงนี้</div>`;
+}
+function renderNotes(){
+  if(!nCur())curNote=notes[0]?notes[0].id:null;
+  const t=$("nTabs");t.innerHTML="";
+  notes.forEach(n=>{const b=document.createElement("button");b.className="chip"+(n.id===curNote?" on":"");b.textContent=n.name||"ไม่มีชื่อ";b.dataset.n=n.id;t.appendChild(b)});
+  const a=document.createElement("button");a.className="chip add";a.textContent="+ โน้ตใหม่";a.dataset.nnew="1";t.appendChild(a);
+  const n=nCur();
+  $("nEd").style.display=n?"block":"none";
+  $("nEmpty").style.display=n?"none":"block";
+  if(n){$("nName").value=n.name;$("nTx").value=n.text;renderPrev()}
+}
+$("nTabs").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b)return;
+  if(b.dataset.n){curNote=b.dataset.n;renderNotes()}
+  if(b.dataset.nnew){
+    dlg({title:"โน้ตใหม่",ok:"สร้าง",body:`<label>ชื่อโน้ต</label><input id="nnN" placeholder="เช่น Anime Defenders">`,init:()=>$("nnN").focus(),
+      onOk:()=>{const n={id:uid(),name:$("nnN").value.trim()||"โน้ต "+(notes.length+1),text:""};notes.push(n);curNote=n.id;save();renderNotes()}});
+  }
+});
+$("nName").addEventListener("input",e=>{
+  const n=nCur();if(!n)return;n.name=e.target.value;save();
+  const c=$("nTabs").querySelector(`[data-n="${n.id}"]`);if(c)c.textContent=n.name||"ไม่มีชื่อ";
+});
+$("nTx").addEventListener("input",e=>{const n=nCur();if(!n)return;n.text=e.target.value;save();renderPrev()});
+$("nPrev").addEventListener("click",e=>{
+  const b=e.target.closest("button");if(!b||!b.dataset.nc)return;
+  const n=nCur();const l=blocks(n.text)[+b.dataset.b];if(!l)return;
+  const p=parts(l),k=b.dataset.nc;
+  if(k==="u")copy(p.user);
+  else if(k==="p")copy(p.pass);
+  else if(k==="up")copy(p.user+":"+p.pass);
+  else if(k==="add"){accs.push({id:uid(),user:p.user,pass:p.pass,cookie:"",desc:p.title,cat:""});save();render();toast("เพิ่มเข้าบัญชีแล้ว")}
+  else if(k[0]==="x")copy(p.extra[+k.slice(1)]);
+});
+$("nCp").onclick=()=>{const n=nCur();if(n)copy(n.text)};
+$("nDl").onclick=()=>{const n=nCur();if(n)download((n.name||"note")+".txt",n.text)};
+$("nDel").onclick=()=>{
+  const n=nCur();if(!n)return;
+  dlg({title:"ลบโน้ต",danger:true,ok:"ลบ",body:`<p>ลบโน้ต <b>${esc(n.name)}</b> ? ย้อนกลับไม่ได้</p>`,
+    onOk:()=>{notes=notes.filter(x=>x.id!==n.id);curNote=null;save();renderNotes()}});
+};
+function mode(m){
+  $("accView").style.display=m==="a"?"":"none";
+  $("noteView").style.display=m==="n"?"":"none";
+  $("mA").classList.toggle("on",m==="a");$("mN").classList.toggle("on",m==="n");
+  if(m==="n")renderNotes();
+}
+/* encrypted backup (AES-GCM + PBKDF2) */
+function toB64(buf){let s="";const a=new Uint8Array(buf);for(let i=0;i<a.length;i+=8192)s+=String.fromCharCode.apply(null,a.subarray(i,i+8192));return btoa(s)}
+function fromB64(s){const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return a}
+async function deriveKey(pw,salt){
+  const m=await crypto.subtle.importKey("raw",new TextEncoder().encode(pw),"PBKDF2",false,["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:250000,hash:"SHA-256"},m,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);
+}
+async function enc(pw,text){
+  const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));
+  const k=await deriveKey(pw,salt);
+  const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},k,new TextEncoder().encode(text));
+  return "AKv1."+toB64(salt)+"."+toB64(iv)+"."+toB64(ct);
+}
+async function dec(pw,s){
+  const p=s.trim().split(".");if(p[0]!=="AKv1"||p.length!==4)throw new Error("fmt");
+  const k=await deriveKey(pw,fromB64(p[1]));
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:fromB64(p[2])},k,fromB64(p[3]));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function applyData(d,rep){
+  const A=(d.accs||[]).map(a=>({...a,id:String(a.id||uid()),cat:a.cat||"",desc:a.desc||""}));
+  if(rep){accs=A;cats=[...(d.cats||[])];notes=d.notes||[];sel.clear();cur="all"}
+  else{
+    const have=new Set(accs.map(a=>a.id));A.forEach(a=>{if(!have.has(a.id))accs.push(a)});
+    (d.cats||[]).forEach(c=>{if(!cats.includes(c))cats.push(c)});
+    const hn=new Set(notes.map(n=>n.id));(d.notes||[]).forEach(n=>{if(!hn.has(n.id))notes.push(n)});
+  }
+  A.forEach(a=>{if(a.cat&&!cats.includes(a.cat))cats.push(a.cat)});
+  curNote=null;save();render();renderNotes();
+}
+$("bEnc").onclick=()=>{
+  dlg({title:"ส่งออกแบบเข้ารหัส",ok:"เข้ารหัส",
+    body:`<p style="color:var(--mut);font-size:12px;line-height:1.6">ตั้งรหัสผ่านให้ข้อมูลชุดนี้ ถ้าลืมรหัสผ่านจะกู้คืนไม่ได้เลย</p><label>รหัสผ่าน</label><input id="pw1" type="password"><label>ยืนยันรหัสผ่าน</label><input id="pw2" type="password">`,
+    onOk:()=>{
+      const a=$("pw1").value;
+      if(a.length<6){toast("รหัสผ่านอย่างน้อย 6 ตัว");return false}
+      if(a!==$("pw2").value){toast("รหัสผ่านไม่ตรงกัน");return false}
+      enc(a,JSON.stringify({accs,cats,notes})).then(code=>{
+        dlg({title:"เข้ารหัสแล้ว",ok:"ดาวน์โหลดไฟล์",
+          body:`<p style="color:var(--mut);font-size:12px;line-height:1.6">คัดลอกข้อความนี้ไปวางที่เครื่องใหม่ หรือดาวน์โหลดเป็นไฟล์ก็ได้ ใครได้ไปก็เปิดอ่านไม่ได้ถ้าไม่มีรหัสผ่าน</p><textarea id="encOut" readonly style="height:120px"></textarea><div style="margin-top:8px"><button class="sec" id="encCp">คัดลอกข้อความ</button></div>`,
+          init:()=>{$("encOut").value=code;$("encCp").onclick=()=>copy(code)},
+          onOk:()=>{download("accounts-"+new Date().toISOString().slice(0,10)+".enc.txt",code);return false}});
+      }).catch(()=>toast("เข้ารหัสไม่สำเร็จ"));
+      return false;
+    }});
+};
+$("bDec").onclick=()=>{
+  dlg({title:"นำเข้าแบบเข้ารหัส",ok:"ถอดรหัส",
+    body:`<label>ข้อความที่เข้ารหัส (วาง หรือเลือกไฟล์)</label><textarea id="dIn" style="height:110px" spellcheck="false"></textarea><div style="margin-top:6px"><button class="sec" id="dF">เลือกไฟล์</button></div><label>รหัสผ่าน</label><input id="dPw" type="password"><label style="display:flex;gap:8px;align-items:center;letter-spacing:0"><input type="checkbox" id="dRep" style="width:16px"> แทนที่ข้อมูลเดิมทั้งหมด (ไม่ติ๊ก = เพิ่มต่อท้าย ข้ามรายการซ้ำ)</label>`,
+    init:()=>{$("dF").onclick=()=>{
+      const f=document.createElement("input");f.type="file";f.accept=".txt,.enc,text/plain";
+      f.onchange=()=>{if(!f.files[0])return;const r=new FileReader();r.onload=()=>{$("dIn").value=r.result};r.readAsText(f.files[0])};
+      f.click();
+    }},
+    onOk:()=>{
+      const pw=$("dPw").value,code=$("dIn").value,rep=$("dRep").checked;
+      if(!code.trim()||!pw){toast("ใส่ข้อความและรหัสผ่านก่อน");return false}
+      dec(pw,code).then(d=>{applyData(d,rep);closeDlg();toast("นำเข้าแล้ว")}).catch(()=>toast("รหัสผ่านผิดหรือข้อมูลเสีย"));
+      return false;
+    }});
+};
+/* cloud sync: end-to-end encrypted vault stored in artifact db */
+const SYNC_KEY="acc_keeper_sync";
+let dbWhy="",sync=null,dbh=null,unsub=null,known={},syncTimer=null,syncBusy=false,needAgain=false,q=Promise.resolve(),status="off";
+const canon=o=>JSON.stringify(o,(k,v)=>v&&typeof v==="object"&&!Array.isArray(v)?Object.keys(v).sort().reduce((r,x)=>(r[x]=v[x],r),{}):v);
+function setStatus(st){
+  status=st;
+  const t={off:"☁ ซิงก์: ปิด",busy:"☁ กำลังซิงก์…",err:"☁ ซิงก์ผิดพลาด",on:"☁ "+(sync?sync.user:"")+" ●"};
+  $("bSync").textContent=t[st];
+  $("bSync").style.color=st==="on"?"var(--grn)":st==="err"?"var(--red)":"";
+}
+const SB_KEY="acc_keeper_sb";
+const SB_DEFAULT={url:"https://miyvfazcgpdsgqceiaei.supabase.co",key:"sb_publishable_O52udMpkjnz0yPyfEWH2GQ_5tj658w9"};
+function sbCfg(){
+  try{const c=JSON.parse(localStorage.getItem(SB_KEY)||"null");if(c)return c}catch(e){}
+  return (window.claude&&claude.use)?null:SB_DEFAULT;
+}
+function sbDb(c){
+  const base=c.url.replace(/\/+$/,"")+"/rest/v1/akv";
+  const H={apikey:c.key,"Content-Type":"application/json"};
+  if(c.key.startsWith("eyJ"))H.Authorization="Bearer "+c.key;
+  const req=async(qs,o)=>{
+    const r=await fetch(base+qs,{method:(o&&o.m)||"GET",headers:{...H,...((o&&o.h)||{})},body:o&&o.b});
+    if(!r.ok)throw {code:"unavailable",message:await r.text()};
+    return o&&o.m?null:r.json();
+  };
+  const up=(v,id,ct,del)=>req("?on_conflict=vault,id",{m:"POST",h:{Prefer:"resolution=merge-duplicates,return=minimal"},b:JSON.stringify({vault:v,id,ct,del,ts:new Date().toISOString()})});
+  const vq=v=>"vault=eq."+encodeURIComponent(v);
+  return {
+    doc:p=>{const v=p.split("/")[1];return {
+      get:async()=>{const r=await req("?"+vq(v)+"&id=eq.__meta&select=ct");return {exists:r.length>0,data:()=>({chk:r[0]&&r[0].ct})}},
+      set:d=>up(v,"__meta",d.chk,false)}},
+    collection:p=>{const v=p.split("/")[1];return {
+      doc:id=>({set:d=>up(v,id,d.ct,false),delete:()=>up(v,id,"",true)}),
+      onSnapshot:(next,err)=>{
+        let prev=null,stop=false,t,ef=false;
+        const tick=async()=>{
+          try{
+            const rows=await req("?"+vq(v)+"&id=neq.__meta&select=id,ct,del,ts");
+            const cur={},ch=[];rows.forEach(r=>{cur[r.id]=r});
+            for(const id in cur){
+              const r=cur[id],o=prev&&prev[id];
+              if(r.del){if(o&&!o.del)ch.push({type:"removed",doc:{id}})}
+              else if(!o||o.del||o.ts!==r.ts)ch.push({type:(o&&!o.del)?"modified":"added",doc:{id,data:()=>({ct:r.ct})}});
+            }
+            const docs=rows.filter(r=>!r.del).map(r=>({id:r.id,data:()=>({ct:r.ct})}));
+            if(prev===null||ch.length)next({docs,docChanges:()=>ch,metadata:{fromCache:false}});
+            prev=cur;ef=false;
+          }catch(e){if(!ef&&err){ef=true;err(e)}}
+          if(!stop)t=setTimeout(tick,5000);
+        };
+        tick();
+        return ()=>{stop=true;clearTimeout(t)};
+      }};}
+  };
+}
+async function getDb(){
+  if(dbh)return dbh;
+  const c=sbCfg();
+  if(c&&c.url&&c.key){dbh=sbDb(c);return dbh}
+  try{
+    if(!(window.claude&&claude.use)){dbWhy="nocl";return null}
+    dbh=await claude.use("db");
+    if(!dbh)dbWhy="null";
+  }catch(e){dbh=null;dbWhy="err"}
+  return dbh;
+}
+async function deriveBits(user,pw){
+  const e=x=>new TextEncoder().encode(x);
+  const m=await crypto.subtle.importKey("raw",e(pw),"PBKDF2",false,["deriveBits"]);
+  return new Uint8Array(await crypto.subtle.deriveBits({name:"PBKDF2",salt:e("ak-vault:"+user),iterations:300000,hash:"SHA-256"},m,384));
+}
+async function openVault(bits){
+  const key=await crypto.subtle.importKey("raw",bits.slice(0,32),"AES-GCM",false,["encrypt","decrypt"]);
+  const vid=[...bits.slice(32,48)].map(b=>b.toString(16).padStart(2,"0")).join("");
+  return {key,vid,bits};
+}
+async function encItem(obj){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},sync.key,new TextEncoder().encode(JSON.stringify(obj))));
+  const o=new Uint8Array(12+ct.length);o.set(iv);o.set(ct,12);return toB64(o);
+}
+async function decItem(str){
+  const u=fromB64(str);
+  const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:u.slice(0,12)},sync.key,u.slice(12));
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function localItems(){
+  const m={};
+  accs.forEach(a=>{m["a_"+a.id]={k:"a",d:a}});
+  notes.forEach(n=>{m["n_"+n.id]={k:"n",d:n}});
+  m["cats"]={k:"c",d:cats};
+  return m;
+}
+function putLocal(obj){
+  const d=obj.d;
+  if(obj.k==="a"){const i=accs.findIndex(a=>a.id===d.id);if(i>=0)accs[i]=d;else accs.push(d)}
+  else if(obj.k==="n"){const i=notes.findIndex(n=>n.id===d.id);if(i>=0)notes[i]=d;else notes.push(d)}
+  else if(obj.k==="c"){cats=Array.isArray(d)?d:[]}
+}
+function removeLocal(id){
+  if(id.startsWith("a_"))accs=accs.filter(a=>a.id!==id.slice(2));
+  else if(id.startsWith("n_"))notes=notes.filter(n=>n.id!==id.slice(2));
+}
+function renderAfterRemote(nc){
+  const act=document.activeElement;
+  if(act&&act.tagName==="INPUT"&&act.closest&&act.closest("#tb")){setTimeout(()=>renderAfterRemote(nc),1200);return}
+  render();
+  if(nc&&$("noteView").style.display!=="none"&&!(act&&(act.id==="nTx"||act.id==="nName")))renderNotes();
+}
+async function handleSnap(snap,first){
+  let changed=false,nc=false;
+  const list=first?snap.docs.map(d=>({type:"added",doc:d})):snap.docChanges();
+  for(const ch of list){
+    const id=ch.doc.id;
+    if(ch.type==="removed"){
+      if(id in known){
+        const L=localItems()[id];
+        if(L&&canon(L)===known[id]){removeLocal(id);changed=true;if(id[0]==="n")nc=true}
+        delete known[id];
+      }
+      continue;
+    }
+    let obj;
+    try{obj=await decItem(ch.doc.data().ct)}catch(e){continue}
+    const r=canon(obj),L=localItems()[id];
+    if(L&&canon(L)===r){known[id]=r;continue}
+    if(!first&&L&&canon(L)!==known[id])continue;
+    known[id]=r;putLocal(obj);changed=true;if(obj.k==="n")nc=true;
+  }
+  if(changed){saveLocal();renderAfterRemote(nc)}
+  if(first)pushChanges();
+}
+function scheduleSync(){
+  if(!sync||!dbh)return;
+  clearTimeout(syncTimer);
+  syncTimer=setTimeout(pushChanges,700);
+}
+async function pushChanges(){
+  if(!sync||!dbh)return;
+  if(syncBusy){needAgain=true;return}
+  syncBusy=true;setStatus("busy");
+  try{
+    const cur=localItems(),col=dbh.collection("vaults/"+sync.vid+"/items");
+    for(const id of Object.keys(cur)){
+      const st=canon(cur[id]);
+      if(known[id]!==st){await col.doc(id).set({ct:await encItem(cur[id])});known[id]=st}
+    }
+    for(const id of Object.keys(known)){
+      if(!(id in cur)){await col.doc(id).delete();delete known[id]}
+    }
+    setStatus("on");
+  }catch(e){
+    setStatus("err");
+    toast(e&&e.code==="quota_exceeded"?"พื้นที่ซิงก์เต็ม":"ซิงก์ไม่สำเร็จ");
+  }
+  syncBusy=false;
+  if(needAgain){needAgain=false;scheduleSync()}
+}
+function beginSync(remember){
+  if(remember){try{localStorage.setItem(SYNC_KEY,JSON.stringify({user:sync.user,bits:toB64(sync.bits)}))}catch(e){}}
+  known={};let first=true;setStatus("busy");
+  const col=dbh.collection("vaults/"+sync.vid+"/items");
+  const timer=setTimeout(()=>toast("เชื่อมต่อช้า กำลังรอเซิร์ฟเวอร์..."),10000);
+  if(unsub)unsub();
+  unsub=col.onSnapshot(snap=>{
+    if(first&&snap.metadata&&snap.metadata.fromCache)return;
+    clearTimeout(timer);
+    const f=first;first=false;
+    q=q.then(()=>handleSnap(snap,f)).then(()=>{if(status!=="err")setStatus("on")}).catch(()=>setStatus("err"));
+  },err=>{clearTimeout(timer);setStatus("err");toast("ซิงก์ขาดการเชื่อมต่อ")});
+}
+async function initSync(){
+  let sv=null;try{sv=JSON.parse(localStorage.getItem(SYNC_KEY)||"null")}catch(e){}
+  if(!sv)return;
+  const db=await getDb();
+  if(!db){setStatus("off");return}
+  try{sync=await openVault(fromB64(sv.bits));sync.user=sv.user;beginSync(false)}catch(e){sync=null;setStatus("off")}
+}
+function dlgCfg(){
+  const c=sbCfg()||{url:"",key:""};
+  dlg({title:"ตั้งค่าเซิร์ฟเวอร์ (Supabase)",ok:"บันทึก",
+    body:`<p style="color:var(--mut);font-size:12px;line-height:1.7">ใช้ซิงก์โดยไม่ต้องล็อกอิน claude.ai กรอก Project URL และ anon key จาก Supabase ของคุณ (เว้นว่างทั้งคู่ = ใช้ที่เก็บของ claude.ai)</p><label>Project URL</label><input id="cfU" value="${esc(c.url)}" placeholder="https://xxxx.supabase.co" autocapitalize="off"><label>anon public key</label><input id="cfK" value="${esc(c.key)}" autocapitalize="off">`,
+    onOk:()=>{
+      const u=$("cfU").value.trim(),k=$("cfK").value.trim();
+      try{if(u&&k)localStorage.setItem(SB_KEY,JSON.stringify({url:u,key:k}));else localStorage.removeItem(SB_KEY)}catch(e){}
+      dbh=null;toast("บันทึกแล้ว");setTimeout(dlgLogin,0);
+    }});
+}
+function dlgLogin(){
+  dlg({title:"ซิงก์ที่เก็บ",ok:"ดำเนินการ",
+    body:`<p style="color:var(--mut);font-size:12px;line-height:1.7">ชื่อผู้ใช้และรหัสผ่านนี้ใช้เปิดที่เก็บ และเป็นกุญแจเข้ารหัสด้วย ข้อมูลถูกเข้ารหัสในเครื่องก่อนขึ้นคลาวด์ ผู้อื่นอ่านไม่ออก <b style="color:var(--red)">ถ้าลืมรหัสผ่านจะกู้คืนไม่ได้</b></p>
+      <label>โหมด</label><select id="sM"><option value="login">เข้าสู่ระบบ (มีที่เก็บแล้ว)</option><option value="new">สร้างที่เก็บใหม่</option></select>
+      <label>ชื่อผู้ใช้</label><input id="sU" autocomplete="off" autocapitalize="off">
+      <label>รหัสผ่าน (อย่างน้อย 8 ตัว)</label><input id="sP" type="password" autocomplete="off">
+      <div id="sP2w" style="display:none"><label>ยืนยันรหัสผ่าน</label><input id="sP2" type="password" autocomplete="off"></div>
+      <label style="display:flex;gap:8px;align-items:center;letter-spacing:0"><input type="checkbox" id="sR" checked style="width:16px"> จดจำเครื่องนี้ (ไม่ต้องล็อกอินซ้ำ)</label><div style="margin-top:12px"><button class="sec" id="sCfg" style="font-size:12px;padding:5px 10px">⚙ ตั้งค่าเซิร์ฟเวอร์ (Supabase)</button></div>`,
+    init:()=>{$("sCfg").onclick=dlgCfg;$("sM").onchange=()=>{$("sP2w").style.display=$("sM").value==="new"?"block":"none"};$("sU").focus()},
+    onOk:()=>{
+      const mode=$("sM").value,user=$("sU").value.trim().toLowerCase(),pw=$("sP").value,rem=$("sR").checked;
+      if(user.length<3||pw.length<8){toast("ชื่อผู้ใช้ ≥ 3 ตัว และรหัสผ่าน ≥ 8 ตัว");return false}
+      if(mode==="new"&&pw!==$("sP2").value){toast("รหัสผ่านไม่ตรงกัน");return false}
+      $("dO").disabled=true;
+      (async()=>{
+        try{
+          const db=await getDb();
+          if(!db){toast(dbWhy==="nocl"?"เปิดนอก claude.ai ซิงก์ไม่ได้ ให้ตั้งค่าเซิร์ฟเวอร์ (⚙) หรือเปิดจากลิงก์ claude.ai":"claude.ai ไม่ได้ให้สิทธิ์ที่เก็บข้อมูลหน้านี้ ลองล็อกอิน claude.ai แล้วรีเฟรช");return}
+          const v=await openVault(await deriveBits(user,pw));
+          v.user=user;sync=v;
+          const meta=db.doc("vaults/"+v.vid),snap=await meta.get();
+          if(mode==="login"&&!snap.exists){sync=null;toast("ไม่พบที่เก็บ: ชื่อหรือรหัสผ่านอาจผิด");return}
+          if(mode==="new"){
+            if(snap.exists){sync=null;toast("มีที่เก็บนี้อยู่แล้ว ให้เลือกเข้าสู่ระบบ");return}
+            await meta.set({chk:await encItem({ok:1})});
+          }
+          closeDlg();beginSync(rem);toast(mode==="new"?"สร้างที่เก็บแล้ว":"เข้าสู่ระบบแล้ว");
+        }catch(e){sync=null;toast("เชื่อมต่อไม่สำเร็จ")}
+        finally{const b=$("dO");if(b)b.disabled=false}
+      })();
+      return false;
+    }});
+}
+function dlgLogout(){
+  dlg({title:"ซิงก์ที่เก็บ",ok:"ออกจากระบบ",danger:true,
+    body:`<p>เชื่อมต่อที่เก็บ <b>${esc(sync.user)}</b> อยู่ (${status==="on"?"ซิงก์ปกติ":status==="err"?"มีปัญหา":"กำลังทำงาน"})</p>
+      <label style="display:flex;gap:8px;align-items:center;letter-spacing:0"><input type="checkbox" id="lClr" checked style="width:16px"> ล้างข้อมูลในเครื่องนี้ด้วย (ข้อมูลยังอยู่ในที่เก็บ)</label>`,
+    onOk:()=>{
+      const clr=$("lClr").checked;
+      clearTimeout(syncTimer);if(unsub){unsub();unsub=null}
+      sync=null;known={};
+      try{localStorage.removeItem(SYNC_KEY)}catch(e){}
+      if(clr){accs=[];cats=[];notes=[];sel.clear();curNote=null;cur="all"}
+      saveLocal();setStatus("off");render();renderNotes();
+      toast("ออกจากระบบแล้ว");
+    }});
+}
+$("bSync").onclick=()=>{sync?dlgLogout():dlgLogin()};
+$("mA").onclick=()=>mode("a");
+$("mN").onclick=()=>mode("n");
+render();
+initSync();
+</script>
+</body>
+</html>
